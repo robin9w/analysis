@@ -1,0 +1,83 @@
+# ==============================================================================
+# STREAMLINED BATCH ITD PIPELINE FOR YOUNG STANDS
+# ==============================================================================
+library(lidR)
+library(sf)
+library(dplyr)
+library(future)
+
+# 1. Setup Paths ----
+gpkg_path  <- "data/vector/mkrf_vri.gpkg"
+lidar_dir  <- "data/lidar/2016_laz" 
+output_dir <- "data/vector"
+chunk_out  <- file.path(output_dir, "chunks")
+
+if (!dir.exists(chunk_out)) dir.create(chunk_out, recursive = TRUE)
+
+# Parallel processing engine
+plan(multisession, workers = 4)
+
+# 2. Load and Filter VRI Footprint ----
+young_stands <- sf::st_read(gpkg_path, layer = "mkrf_fc_2016") %>%
+  filter(TCL_1_TSP_1_AGE > 0 & TCL_1_TSP_1_AGE <= 20) %>%
+  sf::st_make_valid()
+
+# 3. Configure Catalog for Automated Batch Saving ----
+mkrf_catalog <- lidR::readLAScatalog(lidar_dir)
+if (is.na(sf::st_crs(mkrf_catalog))) sf::st_crs(mkrf_catalog) <- 3153
+
+young_stands <- sf::st_transform(young_stands, sf::st_crs(mkrf_catalog))
+
+# Catalog Processing Parameters
+opt_select(mkrf_catalog)       <- "xyzr"
+opt_chunk_size(mkrf_catalog)   <- 250
+opt_chunk_buffer(mkrf_catalog) <- 20
+
+# CRITICAL AUTOMATION STEP:
+# Setting an output template tells lidR to handle all chunking, merging, 
+# and buffer stripping automatically behind the scenes.
+opt_output_files(mkrf_catalog) <- file.path(chunk_out, "tree_chunk_{XLEFT}_{YBOTTOM}")
+
+# 4. Filter the Catalog to Polygon Bounds ----
+# This lets the catalog engine instantly skip files completely outside the young stand matrix
+catalog_young <- lidR::clip_roi(mkrf_catalog, young_stands)
+
+# 5. Execute Standard Processing Pipeline ----
+message("Processing individual trees directly to disk chunks...")
+
+# A. Smoothly normalize height using the catalog template approach
+las_norm_ctg <- lidR::normalize_height(catalog_young, algorithm = lidR::tin())
+
+# B. Run Segmentation using specialized parameters for young forest layers
+# Tight parameters catch short (hmin=0.5m) and narrow (dt1=0.4m) tree architectures
+li_algo <- lidR::li2012(dt1 = 0.4, dt2 = 0.8, Zu = 15, hmin = 0.5, R = 1.5)
+segmented_ctg <- lidR::segment_trees(las_norm_ctg, li_algo)
+
+# C. Extract final tree points/hulls natively across the catalog
+# It writes individual chunk outputs directly to your directory safely.
+metrics_ctg <- lidR::crown_metrics(segmented_ctg, func = .stdtreemetrics, geom = "convex")
+
+# 6. Collate and Combine Results ----
+message("Collating chunk outputs into final layers...")
+chunk_files <- list.files(chunk_out, pattern = "\\.gpkg$", full.names = TRUE)
+
+if (length(chunk_files) > 0) {
+  # Read and bind all generated chunk data frames into a single output sf layer
+  itc_dataset <- lapply(chunk_files, sf::st_read, quiet = TRUE) %>% 
+    dplyr::bind_rows() %>%
+    dplyr::rename(tree_height_m = Z) %>%
+    dplyr::filter(!is.na(tree_height_m))
+  
+  # Save clean finalized outputs
+  sf::st_write(itc_dataset, file.path(output_dir, "mkrf_young_trees_itc.gpkg"), 
+               layer = "individual_trees_2016", delete_dsn = TRUE)
+  
+  write.csv(sf::st_drop_geometry(itc_dataset), 
+            file.path(output_dir, "mkrf_young_trees_summary.csv"), row.names = FALSE)
+  
+  # Clean up temporary split files directory
+  unlink(chunk_out, recursive = TRUE)
+  message("Pipeline complete! Trees successfully extracted.")
+} else {
+  message("No points fell within the specified criteria boundaries.")
+}
