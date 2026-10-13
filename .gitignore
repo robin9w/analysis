@@ -1,0 +1,24 @@
+# Local backup directory
+.backups/
+
+# Python
+.env/
+env/
+
+# R
+.Rhistory
+.RData
+.Ruserdata
+renv/library/
+renv/staging/
+
+# ArcGIS Pro
+GpMessages/
+ImportLog/
+Index/
+*.lock
+*.gdbindexes
+*.gdbtablx
+renv/
+.Rproj.user/
+workflow.Rproj
