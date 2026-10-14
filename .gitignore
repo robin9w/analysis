@@ -1,3 +1,13 @@
+# CLEAN THIS UP PLEASE
+
+# Ignore raw point clouds completely
+data/lidar/
+
+# Ignore any temporary intermediate files or scripts
+*.pyc
+convert_vri.py
+young_stands_mkrf_arcgispro.aprx
+
 # Local backup directory
 .backups/
 
@@ -6,11 +16,12 @@
 env/
 
 # R
+.Rproj.user
+analysis.Rproj
 .Rhistory
 .RData
 .Ruserdata
-renv/library/
-renv/staging/
+renv/
 
 # ArcGIS Pro
 GpMessages/
@@ -19,6 +30,6 @@ Index/
 *.lock
 *.gdbindexes
 *.gdbtablx
-renv/
-.Rproj.user/
-workflow.Rproj
+data/arcgispro.atbx
+data/arcgispro.gdb
+

@@ -861,7 +861,7 @@
     },
     "globals": {
       "Package": "globals",
-      "Version": "0.19.1",
+      "Version": "0.20.0",
       "Source": "Repository",
       "Depends": [
         "R (>= 3.1.2)"
@@ -870,7 +870,7 @@
         "codetools"
       ],
       "Title": "Identify Global Objects in R Expressions",
-      "Authors@R": "c( person(\"Henrik\", \"Bengtsson\", role=c(\"aut\", \"cre\", \"cph\"), email=\"henrikb@braju.com\"), person(\"Davis\",\"Vaughan\", role=\"ctb\", email=\"davis@posit.co\"))",
+      "Authors@R": "c( person(\"Henrik\", \"Bengtsson\", role=c(\"aut\", \"cre\", \"cph\"), email=\"henrikb@braju.com\", comment = c(ORCID = \"0000-0002-7579-5165\")), person(\"Davis\",\"Vaughan\", role=\"ctb\", email=\"davis@posit.co\", comment = c(ORCID = \"0000-0003-4777-038X\")))",
       "Description": "Identifies global (\"unknown\" or \"free\") objects in R expressions by code inspection using various strategies (ordered, liberal, conservative, or deep-first search). The objective of this package is to make it as simple as possible to identify global objects for the purpose of exporting them in parallel, distributed compute environments.",
       "License": "LGPL (>= 2.1)",
       "LazyLoad": "TRUE",
@@ -879,9 +879,9 @@
       "Encoding": "UTF-8",
       "URL": "https://globals.futureverse.org, https://github.com/futureverse/globals",
       "BugReports": "https://github.com/futureverse/globals/issues",
-      "RoxygenNote": "7.3.3",
+      "Config/roxygen2/version": "8.1.0",
       "NeedsCompilation": "no",
-      "Author": "Henrik Bengtsson [aut, cre, cph], Davis Vaughan [ctb]",
+      "Author": "Henrik Bengtsson [aut, cre, cph] (ORCID: <https://orcid.org/0000-0002-7579-5165>), Davis Vaughan [ctb] (ORCID: <https://orcid.org/0000-0003-4777-038X>)",
       "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
       "Repository": "CRAN"
     },
